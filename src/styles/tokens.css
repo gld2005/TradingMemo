@@ -1,0 +1,52 @@
+:root {
+  font-family:
+    Inter, "Segoe UI", "Microsoft YaHei UI", system-ui, -apple-system, sans-serif;
+  color: #172033;
+  background: #f5f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+[data-theme='light'] {
+  --color-bg: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8f9fc;
+  --color-sidebar: #fbfcfe;
+  --color-text: #172033;
+  --color-text-muted: #717b8f;
+  --color-border: #e6e9f0;
+  --color-accent: #5267d9;
+  --color-accent-soft: #eef0ff;
+  --color-accent-strong: #4053c7;
+  --color-disabled: #aeb5c3;
+  --shadow-card: 0 18px 45px rgba(31, 43, 78, 0.07);
+}
+
+[data-theme='dark'] {
+  --color-bg: #131722;
+  --color-surface: #1c2230;
+  --color-surface-muted: #202737;
+  --color-sidebar: #171c28;
+  --color-text: #edf0f7;
+  --color-text-muted: #9ca6b9;
+  --color-border: #2b3344;
+  --color-accent: #8c9cff;
+  --color-accent-soft: #282f4b;
+  --color-accent-strong: #a5b1ff;
+  --color-disabled: #657086;
+  --shadow-card: 0 18px 45px rgba(0, 0, 0, 0.22);
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+}

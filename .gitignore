@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+release/
+out/
+
+# local data
+data/
+
+# logs
+*.log
+
+# env
+.env
+.env.local
+
+# temp
+*.tmp
+*.cache
+*.tsbuildinfo
+
+# installers / packages
+*.exe
+*.msi
+*.msix
+*.zip
+
+# rust / tauri
+src-tauri/target/
+target/
+
+# windows reserved / bad files
+NUL
+nul
+
+# system
+.DS_Store
+Thumbs.db

@@ -1,0 +1,73 @@
+{
+  "name": "trading-memo",
+  "version": "0.1.0",
+  "author": "Trading Memo",
+  "private": true,
+  "description": "Windows 桌面浮窗版 A 股学习笔记软件",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "concurrently -k --success first \"vite\" \"wait-on http://127.0.0.1:5173 && electron . --dev\"",
+    "dev:web": "vite",
+    "test": "vitest run && node --test electron/*.test.cjs",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "build": "npm run typecheck && vite build",
+    "package:win": "npm run build && electron-builder --win nsis --x64",
+    "dist:win": "npm test && npm run package:win",
+    "visual:smoke": "electron electron/visual-smoke.cjs",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "concurrently": "10.0.3",
+    "electron": "42.4.1",
+    "electron-builder": "26.0.12",
+    "jsdom": "29.1.1",
+    "rcedit": "^5.0.2",
+    "typescript": "6.0.3",
+    "vite": "8.0.16",
+    "vitest": "4.1.9",
+    "wait-on": "9.0.10"
+  },
+  "build": {
+    "appId": "com.local.tradingmemo",
+    "productName": "Trading Memo",
+    "afterPack": "electron/after-pack.cjs",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "!electron/*.test.cjs",
+      "!electron/visual-smoke.cjs",
+      "!electron/after-pack.cjs",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    }
+  }
+}
