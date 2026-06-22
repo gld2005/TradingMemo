@@ -11,6 +11,7 @@ function createWindowManager({
 }) {
   let mainWindow = null;
   let floatingWindow = null;
+  let floatingMode = 'expanded';
   let quitting = false;
 
   function createWindows() {
@@ -33,6 +34,7 @@ function createWindowManager({
     floatingWindow = new BrowserWindow({
       width: FLOATING_SIZES.expanded[0],
       height: FLOATING_SIZES.expanded[1],
+      show: false,
       alwaysOnTop: true,
       backgroundColor: '#00000000',
       frame: false,
@@ -85,16 +87,18 @@ function createWindowManager({
   }
 
   function setFloatingMode(mode) {
-    if (!floatingWindow || !(mode in FLOATING_SIZES)) return;
+    if (!floatingWindow || !(mode in FLOATING_SIZES)) return false;
     const [width, height] = FLOATING_SIZES[mode];
-    floatingWindow.setSize(width, height, true);
+    floatingWindow.setSize(width, height, false);
+    floatingMode = mode;
+    return true;
   }
 
   return {
     createWindows,
     getMainWindow: () => mainWindow,
     getFloatingWindow: () => floatingWindow,
-    getFloatingState: () => ({ visible: floatingWindow?.isVisible() ?? false }),
+    getFloatingState: () => ({ mode: floatingMode, visible: floatingWindow?.isVisible() ?? false }),
     hideFloatingWindow,
     prepareToQuit: () => {
       quitting = true;

@@ -138,10 +138,15 @@ export function FloatingWindow() {
     setFeedback('');
   }
 
-  function setMode(mode: FloatingMode) {
-    setIsMini(mode === 'mini');
-    void window.desktop?.setFloatingMode(mode);
-    if (mode === 'expanded') requestAnimationFrame(() => inputRef.current?.focus());
+  async function setMode(mode: FloatingMode) {
+    if (!window.desktop) return;
+    try {
+      await window.desktop.setFloatingMode(mode);
+      setIsMini(mode === 'mini');
+      if (mode === 'expanded') requestAnimationFrame(() => inputRef.current?.focus());
+    } catch {
+      setFeedback('浮窗大小调整失败，请重试。');
+    }
   }
 
   function toggleTag(id: string) {
@@ -224,7 +229,7 @@ export function FloatingWindow() {
           <button
             aria-label="展开笔记浮窗"
             className="window-no-drag"
-            onClick={() => setMode('expanded')}
+            onClick={() => void setMode('expanded')}
             type="button"
           >
             <span aria-hidden="true">记</span>
@@ -244,7 +249,7 @@ export function FloatingWindow() {
             <h1>今日笔记</h1>
           </div>
           <div className="floating-card__window-actions window-no-drag">
-            <button aria-label="折叠浮窗" onClick={() => setMode('mini')} type="button">—</button>
+            <button aria-label="折叠浮窗" onClick={() => void setMode('mini')} type="button">—</button>
             <button
               aria-label="隐藏浮窗"
               onClick={() => void window.desktop?.hideFloatingWindow()}

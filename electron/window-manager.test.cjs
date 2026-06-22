@@ -61,21 +61,26 @@ test('configures and controls one always-on-top floating window', () => {
   });
   const { floatingWindow } = manager.createWindows();
 
+  assert.equal(floatingWindow.options.show, false);
+  assert.equal(floatingWindow.visible, false);
   assert.equal(floatingWindow.options.alwaysOnTop, true);
   assert.equal(floatingWindow.options.frame, false);
   assert.equal(floatingWindow.options.resizable, false);
   assert.deepEqual(floatingWindow.size, [380, 640]);
 
   manager.toggleFloatingWindow();
-  assert.equal(floatingWindow.visible, false);
-  manager.toggleFloatingWindow();
   assert.equal(floatingWindow.visible, true);
   assert.equal(floatingWindow.focused, true);
+  manager.toggleFloatingWindow();
+  assert.equal(floatingWindow.visible, false);
 
-  manager.setFloatingMode('mini');
+  assert.equal(manager.setFloatingMode('mini'), true);
   assert.deepEqual(floatingWindow.size, [104, 52]);
-  manager.setFloatingMode('expanded');
+  assert.equal(manager.getFloatingState().mode, 'mini');
+  assert.equal(manager.setFloatingMode('expanded'), true);
   assert.deepEqual(floatingWindow.size, [380, 640]);
+  assert.equal(manager.getFloatingState().mode, 'expanded');
+  assert.equal(manager.setFloatingMode('unknown'), false);
 });
 
 test('hides the floating window instead of destroying it on close', () => {

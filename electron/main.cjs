@@ -55,7 +55,10 @@ function registerIpcHandlers() {
     return floatingState();
   });
   ipcMain.handle('floating:set-mode', (_event, mode) => {
-    windowManager.setFloatingMode(mode);
+    if (!windowManager.setFloatingMode(mode)) {
+      throw new Error('Unable to change the floating window mode.');
+    }
+    return floatingState();
   });
 }
 

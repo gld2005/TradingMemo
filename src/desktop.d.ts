@@ -1,6 +1,7 @@
 type FloatingMode = 'expanded' | 'mini';
 
 type FloatingState = {
+  mode: FloatingMode;
   shortcutRegistered: boolean;
   visible: boolean;
 };
@@ -109,7 +110,7 @@ type DesktopApi = {
   onFloatingStateChanged: (callback: (state: FloatingState) => void) => () => void;
   onNotesChanged: (callback: () => void) => () => void;
   readAttachment: (id: string) => Promise<AttachmentContent>;
-  setFloatingMode: (mode: FloatingMode) => Promise<void>;
+  setFloatingMode: (mode: FloatingMode) => Promise<FloatingState>;
   showFloatingWindow: () => Promise<FloatingState>;
   toggleFloatingWindow: () => Promise<FloatingState>;
 };

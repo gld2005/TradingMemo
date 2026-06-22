@@ -85,8 +85,8 @@ async function run() {
   await capture(mainWindow, 'qa-library-dark.png');
 
   floatingWindow = new BrowserWindow({
-    width: 360,
-    height: 420,
+    width: 380,
+    height: 640,
     backgroundColor: '#00000000',
     frame: false,
     show: true,
@@ -94,13 +94,27 @@ async function run() {
     webPreferences,
   });
   await floatingWindow.loadFile(renderer, { query: { window: 'floating' } });
+  await floatingWindow.webContents.executeJavaScript(`
+    window.desktop = {
+      createNote: async () => ({}),
+      createTag: async () => ({}),
+      getCategories: async () => [],
+      getTags: async () => [],
+      getSettings: async () => ({ theme: 'light', defaultCategoryId: null }),
+      onFloatingShown: () => () => {},
+      onNotesChanged: () => () => {},
+      onSettingsChanged: () => () => {},
+      setFloatingMode: async () => ({ mode: 'mini', visible: true })
+    };
+    void 0;
+  `);
   await waitFor(floatingWindow, "document.querySelector('.floating-card')");
   await capture(floatingWindow, 'qa-floating.png');
   await floatingWindow.webContents.executeJavaScript(
     "document.querySelector('[aria-label=\"折叠浮窗\"]')?.click()",
   );
   await waitFor(floatingWindow, "document.querySelector('[aria-label=\"展开笔记浮窗\"]')");
-  floatingWindow.setSize(104, 52);
+  floatingWindow.setSize(104, 52, false);
   await waitFor(floatingWindow, "document.querySelector('[aria-label=\"展开笔记浮窗\"]')");
   await capture(floatingWindow, 'qa-floating-mini.png');
 

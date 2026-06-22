@@ -226,6 +226,17 @@ describe('floating window placeholder', () => {
     expect(window.desktop.setFloatingMode).toHaveBeenCalledWith('expanded');
   });
 
+  it('keeps the expanded view when the native window cannot enter mini mode', async () => {
+    const user = userEvent.setup();
+    vi.mocked(window.desktop.setFloatingMode).mockRejectedValueOnce(new Error('resize failed'));
+    render(<FloatingWindow />);
+
+    await user.click(screen.getByRole('button', { name: '折叠浮窗' }));
+
+    expect(screen.getByRole('heading', { name: '今日笔记' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '展开笔记浮窗' })).not.toBeInTheDocument();
+  });
+
   it('adds pasted images as removable drafts without clearing typed text', async () => {
     const user = userEvent.setup();
     const image = new File([Uint8Array.from([1, 2, 3])], 'capture.png', { type: 'image/png' });
