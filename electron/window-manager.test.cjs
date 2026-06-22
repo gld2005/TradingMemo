@@ -10,6 +10,8 @@ class FakeBrowserWindow extends EventEmitter {
     this.visible = options.show !== false;
     this.size = [options.width, options.height];
     this.focused = false;
+    this.hasWindowShadow = options.hasShadow;
+    this.menuRemoved = false;
   }
 
   hide() {
@@ -31,7 +33,66 @@ class FakeBrowserWindow extends EventEmitter {
   setSize(width, height) {
     this.size = [width, height];
   }
+
+  setContentSize(width, height) {
+    this.size = [width, height];
+  }
+
+  setMinimumSize(width, height) {
+    this.minimumSize = [width, height];
+  }
+
+  setHasShadow(hasShadow) {
+    this.hasWindowShadow = hasShadow;
+  }
+
+  setTitleBarOverlay(overlay) {
+    this.titleBarOverlay = overlay;
+  }
+
+  removeMenu() {
+    this.menuRemoved = true;
+  }
 }
+
+test('integrates native window controls into the main window surface', () => {
+  const manager = createWindowManager({
+    BrowserWindow: FakeBrowserWindow,
+    loadRenderer: () => undefined,
+  });
+  const { mainWindow, floatingWindow } = manager.createWindows();
+
+  assert.equal(mainWindow.options.titleBarStyle, 'hidden');
+  assert.deepEqual(mainWindow.options.titleBarOverlay, {
+    color: '#f8f9fc',
+    symbolColor: '#1f2a44',
+    height: 40,
+  });
+  assert.equal(mainWindow.menuRemoved, true);
+  assert.equal(floatingWindow.options.frame, false);
+});
+
+test('updates native title bar colors with the application theme', () => {
+  const manager = createWindowManager({
+    BrowserWindow: FakeBrowserWindow,
+    loadRenderer: () => undefined,
+  });
+  const { mainWindow } = manager.createWindows();
+
+  assert.equal(manager.setMainWindowTheme('dark'), true);
+  assert.deepEqual(mainWindow.titleBarOverlay, {
+    color: '#171b25',
+    symbolColor: '#f4f6fb',
+    height: 40,
+  });
+  assert.equal(manager.setMainWindowTheme('light'), true);
+  assert.deepEqual(mainWindow.titleBarOverlay, {
+    color: '#f8f9fc',
+    symbolColor: '#1f2a44',
+    height: 40,
+  });
+  assert.equal(manager.setMainWindowTheme('system'), false);
+});
 
 test('retains both windows until each window closes', () => {
   const loadedWindows = [];
@@ -66,7 +127,7 @@ test('configures and controls one always-on-top floating window', () => {
   assert.equal(floatingWindow.options.alwaysOnTop, true);
   assert.equal(floatingWindow.options.frame, false);
   assert.equal(floatingWindow.options.resizable, false);
-  assert.deepEqual(floatingWindow.size, [380, 640]);
+  assert.deepEqual(floatingWindow.size, [380, 430]);
 
   manager.toggleFloatingWindow();
   assert.equal(floatingWindow.visible, true);
@@ -75,10 +136,12 @@ test('configures and controls one always-on-top floating window', () => {
   assert.equal(floatingWindow.visible, false);
 
   assert.equal(manager.setFloatingMode('mini'), true);
-  assert.deepEqual(floatingWindow.size, [104, 52]);
+  assert.deepEqual(floatingWindow.size, [80, 80]);
+  assert.equal(floatingWindow.hasWindowShadow, false);
   assert.equal(manager.getFloatingState().mode, 'mini');
   assert.equal(manager.setFloatingMode('expanded'), true);
-  assert.deepEqual(floatingWindow.size, [380, 640]);
+  assert.deepEqual(floatingWindow.size, [380, 430]);
+  assert.equal(floatingWindow.hasWindowShadow, true);
   assert.equal(manager.getFloatingState().mode, 'expanded');
   assert.equal(manager.setFloatingMode('unknown'), false);
 });

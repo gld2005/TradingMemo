@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, globalShortcut, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, dialog, globalShortcut, ipcMain, screen, shell } = require('electron');
 const path = require('node:path');
 const { createAttachmentStorage } = require('./attachment-storage.cjs');
 const { registerNotesIpc } = require('./notes-ipc.cjs');
@@ -8,6 +8,7 @@ const { createStorageService } = require('./storage-service.cjs');
 const { createSettingsService } = require('./settings-service.cjs');
 const { createDataPortabilityService } = require('./data-portability-service.cjs');
 const { createWindowManager } = require('./window-manager.cjs');
+const { resolveFloatingPosition } = require('./floating-position.cjs');
 
 const isDevelopment = process.argv.includes('--dev');
 
@@ -38,6 +39,7 @@ function broadcastFloatingState() {
 }
 
 function registerIpcHandlers() {
+  ipcMain.handle('window:set-title-bar-theme', (_event, theme) => windowManager.setMainWindowTheme(theme));
   ipcMain.handle('floating:get-state', () => floatingState());
   ipcMain.handle('floating:hide', () => {
     windowManager.hideFloatingWindow();
@@ -60,6 +62,26 @@ function registerIpcHandlers() {
     }
     return floatingState();
   });
+  ipcMain.handle('floating:get-bounds', () => {
+  const win = windowManager.getFloatingWindow();
+  if (!win) return null;
+  return win.getBounds(); // { x, y, width, height }
+  });
+
+ipcMain.on('floating:set-position', (_event, x, y, cursorX, cursorY, finalize) => {
+  const win = windowManager.getFloatingWindow();
+  if (!win || ![x, y, cursorX, cursorY].every(Number.isFinite)) return;
+  const cursor = { x: Math.round(cursorX), y: Math.round(cursorY) };
+  const display = screen.getDisplayNearestPoint(cursor);
+  const [nextX, nextY] = resolveFloatingPosition({
+    cursor,
+    finalize: Boolean(finalize),
+    target: { x, y },
+    windowSize: win.getSize(),
+    workArea: display.workArea,
+  });
+  win.setPosition(nextX, nextY);
+});
 }
 
 function broadcastNotesChanged() {

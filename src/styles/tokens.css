@@ -19,6 +19,7 @@
   --color-accent-soft: #eef0ff;
   --color-accent-strong: #4053c7;
   --color-disabled: #aeb5c3;
+  --color-title-bar: #f8f9fc;
   --shadow-card: 0 18px 45px rgba(31, 43, 78, 0.07);
 }
 
@@ -34,6 +35,7 @@
   --color-accent-soft: #282f4b;
   --color-accent-strong: #a5b1ff;
   --color-disabled: #657086;
+  --color-title-bar: #171b25;
   --shadow-card: 0 18px 45px rgba(0, 0, 0, 0.22);
 }
 

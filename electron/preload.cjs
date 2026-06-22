@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('desktop', {
+  setTitleBarTheme: (theme) => ipcRenderer.invoke('window:set-title-bar-theme', theme),
   createNote: (input) => ipcRenderer.invoke('notes:create', input),
   updateNote: (id, input) => ipcRenderer.invoke('notes:update', id, input),
   deleteNote: (id) => ipcRenderer.invoke('notes:delete', id),
@@ -48,4 +49,9 @@ contextBridge.exposeInMainWorld('desktop', {
   setFloatingMode: (mode) => ipcRenderer.invoke('floating:set-mode', mode),
   showFloatingWindow: () => ipcRenderer.invoke('floating:show'),
   toggleFloatingWindow: () => ipcRenderer.invoke('floating:toggle'),
+  // electron/preload.cjs —— 在 exposeInMainWorld 的返回对象中添加：
+  getFloatingBounds: () => ipcRenderer.invoke('floating:get-bounds'),
+  setFloatingPosition: (x, y, cursorX, cursorY, finalize) => {
+    ipcRenderer.send('floating:set-position', x, y, cursorX, cursorY, finalize);
+  },
 });

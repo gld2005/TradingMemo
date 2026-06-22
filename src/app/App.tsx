@@ -56,6 +56,10 @@ export function App() {
     };
   },[]);
 
+  useEffect(() => {
+    void window.desktop?.setTitleBarTheme?.(theme);
+  }, [theme]);
+
   async function toggleFloatingWindow() {
     if (!window.desktop) return;
     const state = await window.desktop.toggleFloatingWindow();

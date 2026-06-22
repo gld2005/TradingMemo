@@ -24,6 +24,7 @@ export function AppLayout({
 }: AppLayoutProps) {
   return (
     <div className="app-shell" data-theme={theme} data-testid="app-shell">
+      <div className="app-title-bar" data-testid="app-title-bar" aria-hidden="true" />
       <Sidebar
         activePage={activePage}
         floatingVisible={floatingVisible}

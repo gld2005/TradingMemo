@@ -9,6 +9,7 @@ describe('main window shell', () => {
     Object.defineProperty(window, 'desktop', {
       configurable: true,
       value: {
+        setTitleBarTheme: vi.fn().mockResolvedValue(true),
         createNote: vi.fn().mockResolvedValue({ id: 'note-1' }),
         getAllNotes: vi.fn().mockResolvedValue([]),
         getAttachments: vi.fn().mockResolvedValue([]),
@@ -33,6 +34,12 @@ describe('main window shell', () => {
     });
   });
 
+  it('renders an integrated draggable title bar surface', () => {
+    render(<App />);
+
+    expect(screen.getByTestId('app-title-bar')).toBeInTheDocument();
+  });
+
   it('shows the requested page content when navigating', async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -47,7 +54,7 @@ describe('main window shell', () => {
     expect(screen.getByRole('heading', { name: '标签管理' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '设置' }));
-    expect(screen.getByText('导出与备份')).toBeInTheDocument();
+    expect(screen.getByText('数据管理')).toBeInTheDocument();
   });
 
   it('switches theme only in the current renderer state', async () => {
@@ -59,6 +66,7 @@ describe('main window shell', () => {
 
     await user.click(screen.getByRole('button', { name: '切换到深色主题' }));
     expect(shell).toHaveAttribute('data-theme', 'dark');
+    await waitFor(() => expect(window.desktop.setTitleBarTheme).toHaveBeenLastCalledWith('dark'));
   });
 
   it('tracks system theme changes while the system preference is selected', async () => {
@@ -122,6 +130,8 @@ describe('floating window placeholder', () => {
         onNotesChanged: vi.fn().mockReturnValue(() => undefined),
         readAttachment: vi.fn(),
         setFloatingMode: vi.fn().mockResolvedValue(undefined),
+        getFloatingBounds: vi.fn().mockResolvedValue({ x: 40, y: 60, width: 80, height: 80 }),
+        setFloatingPosition: vi.fn(),
         showFloatingWindow: vi.fn().mockResolvedValue({ shortcutRegistered: true, visible: true }),
         toggleFloatingWindow: vi.fn().mockResolvedValue({ shortcutRegistered: true, visible: false }),
       },
@@ -132,7 +142,7 @@ describe('floating window placeholder', () => {
     const user = userEvent.setup();
     render(<FloatingWindow />);
 
-    expect(screen.getByRole('heading', { name: '今日笔记' })).toBeInTheDocument();
+    expect(screen.getByText('Quick Note')).toBeInTheDocument();
     const input = screen.getByPlaceholderText('输入学习心得或看盘经验...');
     const save = screen.getByRole('button', { name: '保存' });
     expect(save).toBeDisabled();
@@ -221,9 +231,56 @@ describe('floating window placeholder', () => {
     expect(screen.getByRole('button', { name: '展开笔记浮窗' })).toBeInTheDocument();
     expect(window.desktop.setFloatingMode).toHaveBeenCalledWith('mini');
 
-    await user.click(screen.getByRole('button', { name: '展开笔记浮窗' }));
-    expect(screen.getByRole('heading', { name: '今日笔记' })).toBeInTheDocument();
+    await user.dblClick(screen.getByRole('button', { name: '展开笔记浮窗' }));
+    expect(screen.getByText('Quick Note')).toBeInTheDocument();
     expect(window.desktop.setFloatingMode).toHaveBeenCalledWith('expanded');
+  });
+
+  it('moves the mini window with the latest captured pointer position', async () => {
+    const user = userEvent.setup();
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => frames.push(callback));
+    render(<FloatingWindow />);
+    await user.click(screen.getByRole('button', { name: '折叠浮窗' }));
+
+    const miniButton = screen.getByRole('button', { name: '展开笔记浮窗' });
+    Object.assign(miniButton, {
+      setPointerCapture: vi.fn(),
+      releasePointerCapture: vi.fn(),
+      hasPointerCapture: vi.fn().mockReturnValue(true),
+    });
+
+    fireEvent.pointerDown(miniButton, { button: 0, pointerId: 7, screenX: 100, screenY: 120 });
+    await waitFor(() => expect(window.desktop.getFloatingBounds).toHaveBeenCalledOnce());
+    fireEvent.pointerMove(miniButton, { pointerId: 7, screenX: 135, screenY: 165 });
+    fireEvent.pointerUp(miniButton, { pointerId: 7, screenX: 135, screenY: 165 });
+
+    expect(miniButton.setPointerCapture).toHaveBeenCalledWith(7);
+    expect(window.desktop.setFloatingPosition).toHaveBeenLastCalledWith(75, 105, 135, 165, true);
+    vi.unstubAllGlobals();
+  });
+
+  it('uses pointer movement that happens while native bounds are loading', async () => {
+    const user = userEvent.setup();
+    let resolveBounds!: (bounds: { x: number; y: number; width: number; height: number }) => void;
+    vi.mocked(window.desktop.getFloatingBounds!).mockReturnValueOnce(new Promise((resolve) => {
+      resolveBounds = resolve;
+    }));
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => frames.push(callback));
+    render(<FloatingWindow />);
+    await user.click(screen.getByRole('button', { name: '折叠浮窗' }));
+    const miniButton = screen.getByRole('button', { name: '展开笔记浮窗' });
+    Object.assign(miniButton, { setPointerCapture: vi.fn() });
+
+    fireEvent.pointerDown(miniButton, { button: 0, pointerId: 4, screenX: 100, screenY: 120 });
+    fireEvent.pointerMove(miniButton, { pointerId: 4, screenX: 130, screenY: 150 });
+    frames.shift()?.(0);
+    await act(async () => resolveBounds({ x: 40, y: 60, width: 80, height: 80 }));
+    frames.shift()?.(1);
+
+    expect(window.desktop.setFloatingPosition).toHaveBeenLastCalledWith(70, 90, 130, 150, false);
+    vi.unstubAllGlobals();
   });
 
   it('keeps the expanded view when the native window cannot enter mini mode', async () => {
@@ -233,7 +290,7 @@ describe('floating window placeholder', () => {
 
     await user.click(screen.getByRole('button', { name: '折叠浮窗' }));
 
-    expect(screen.getByRole('heading', { name: '今日笔记' })).toBeInTheDocument();
+    expect(screen.getByText('Quick Note')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '展开笔记浮窗' })).not.toBeInTheDocument();
   });
 

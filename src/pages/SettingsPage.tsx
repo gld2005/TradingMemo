@@ -58,6 +58,15 @@ export function SettingsPage() {
     }
   }
 
+  async function copyDataDirectory() {
+    try {
+      await navigator.clipboard.writeText(dataDirectory);
+      setFeedback('数据路径已复制。');
+    } catch {
+      setFeedback('无法复制数据路径，请重试。');
+    }
+  }
+
   async function restore() {
     if (!confirm('恢复会覆盖当前数据。继续前将自动创建安全备份，确定恢复吗？')) return;
 
@@ -88,23 +97,42 @@ export function SettingsPage() {
       <PageHeader title="设置" description="管理外观、浮窗与本地数据。" />
       <div className="settings-grid">
         <Card className="settings-card">
-          <h2>外观设置</h2>
-          <label>
-            主题
-            <select
-              aria-label="主题"
-              value={settings.theme}
-              onChange={(event) => void save({ theme: event.target.value as AppSettings['theme'] })}
-            >
-              <option value="light">浅色</option>
-              <option value="dark">深色</option>
-              <option value="system">跟随系统</option>
-            </select>
-          </label>
+          <div className="settings-card__header">
+            <h2>偏好设置</h2>
+            <p>调整应用外观与新记录的默认值。</p>
+          </div>
+          <div className="settings-field-grid">
+            <label>
+              主题
+              <select
+                aria-label="主题"
+                value={settings.theme}
+                onChange={(event) => void save({ theme: event.target.value as AppSettings['theme'] })}
+              >
+                <option value="light">浅色</option>
+                <option value="dark">深色</option>
+                <option value="system">跟随系统</option>
+              </select>
+            </label>
+            <label>
+              默认分类
+              <select
+                aria-label="默认分类"
+                value={settings.defaultCategoryId || ''}
+                onChange={(event) => void save({ defaultCategoryId: event.target.value || null })}
+              >
+                <option value="">未分类</option>
+                {categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}
+              </select>
+            </label>
+          </div>
         </Card>
 
         <Card className="settings-card">
-          <h2>浮窗设置</h2>
+          <div className="settings-card__header">
+            <h2>浮窗设置</h2>
+            <p>设置快速显示或隐藏浮窗的快捷键。</p>
+          </div>
           <label>
             显示/隐藏快捷键
             <input aria-label="浮窗快捷键" value={shortcut} onChange={(event) => setShortcut(event.target.value)} />
@@ -117,46 +145,36 @@ export function SettingsPage() {
           </div>
         </Card>
 
-        <Card className="settings-card">
-          <h2>默认记录设置</h2>
-          <label>
-            默认分类
-            <select
-              aria-label="默认分类"
-              value={settings.defaultCategoryId || ''}
-              onChange={(event) => void save({ defaultCategoryId: event.target.value || null })}
-            >
-              <option value="">未分类</option>
-              {categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}
-            </select>
-          </label>
-        </Card>
-
-        <Card className="settings-card">
-          <h2>数据位置</h2>
-          <code>{dataDirectory}</code>
-          <Button
-            variant="secondary"
-            onClick={() => void window.desktop.openDataDirectory().catch(() => setFeedback('无法打开数据目录。'))}
-          >
-            打开数据目录
-          </Button>
-        </Card>
-
         <Card className="settings-card settings-card--wide">
-          <h2>导出与备份</h2>
-          <p>所有操作均在本地完成，不会上传数据。</p>
+          <div className="settings-card__header">
+            <h2>数据管理</h2>
+            <p>查看数据位置，或导出、备份和恢复本地数据。所有操作均在本地完成。</p>
+          </div>
+          <div className="settings-path">
+            <span>数据位置</span>
+            <code>{dataDirectory}</code>
+            <div className="settings-actions">
+              <Button
+                variant="secondary"
+                onClick={() => void window.desktop.openDataDirectory().catch(() => setFeedback('无法打开数据目录。'))}
+              >
+                打开数据目录
+              </Button>
+              <Button variant="ghost" onClick={() => void copyDataDirectory()}>复制路径</Button>
+            </div>
+          </div>
+          <div className="settings-divider" />
           <div className="settings-actions">
             <Button onClick={() => void runFileAction(() => window.desktop.exportMarkdown(), 'Markdown 导出')}>导出 Markdown</Button>
-            <Button onClick={() => void runFileAction(() => window.desktop.exportJson(), 'JSON 导出')}>导出 JSON</Button>
+            <Button variant="secondary" onClick={() => void runFileAction(() => window.desktop.exportJson(), 'JSON 导出')}>导出 JSON</Button>
             <Button variant="secondary" onClick={() => void runFileAction(() => window.desktop.backupData(), '备份')}>备份数据</Button>
-            <Button variant="secondary" onClick={() => void restore()}>从备份恢复</Button>
+            <Button variant="ghost" onClick={() => void restore()}>从备份恢复</Button>
           </div>
         </Card>
 
-        <Card className="settings-card settings-card--wide">
-          <h2>关于项目</h2>
-          <strong>Trading Memo 0.1.0</strong>
+        <Card className="settings-card settings-card--wide settings-about">
+          <h2>关于 Trading Memo</h2>
+          <strong>版本 0.1.1</strong>
           <p>Windows 桌面浮窗版 A 股学习笔记软件。数据仅保存在本地。</p>
           <p>本软件仅用于学习笔记和个人经验记录，不提供投资建议，不推荐股票，不进行自动交易。</p>
         </Card>

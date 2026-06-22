@@ -12,6 +12,7 @@ import { Card } from '../components/Card';
 import { Input } from '../components/Input';
 import { readFileBytes, selectImageDrafts } from './image-drafts';
 
+
 type ImageDraft = {
   id: string;
   file: File;
@@ -30,6 +31,19 @@ export function FloatingWindow() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
+
+  const draggingRef = useRef(false);
+  const dragRafRef = useRef<number | null>(null);
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startScreenX: number;
+    startScreenY: number;
+    originX: number | null;
+    originY: number | null;
+    latestScreenX: number;
+    latestScreenY: number;
+  } | null>(null);
+
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [newTagName, setNewTagName] = useState('');
   const [stockName, setStockName] = useState('');
@@ -59,7 +73,9 @@ export function FloatingWindow() {
     if (!window.desktop) return;
     void loadOrganizationData()
       .catch(() => setFeedback('读取分类和标签失败，请检查本地数据。'));
-    const removeShownListener = window.desktop.onFloatingShown(() => {
+    const removeShownListener = window.desktop.onFloatingShown(async () => {
+      const state = await window.desktop.getFloatingState();
+      setIsMini(state.mode === 'mini');
       inputRef.current?.focus();
       void loadOrganizationData().catch(() => setFeedback('读取分类和标签失败，请检查本地数据。'));
     });
@@ -149,6 +165,78 @@ export function FloatingWindow() {
     }
   }
 
+  async function onMiniPointerDown(event: React.PointerEvent<HTMLButtonElement>) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    draggingRef.current = true;
+    const dragState = {
+      pointerId: event.pointerId,
+      startScreenX: event.screenX,
+      startScreenY: event.screenY,
+      originX: null,
+      originY: null,
+      latestScreenX: event.screenX,
+      latestScreenY: event.screenY,
+    };
+    dragStateRef.current = dragState;
+
+    const bounds = await window.desktop.getFloatingBounds?.();
+    if (!bounds || !draggingRef.current || dragStateRef.current !== dragState) return;
+    dragState.originX = bounds.x;
+    dragState.originY = bounds.y;
+    scheduleMiniPosition();
+  }
+
+  function scheduleMiniPosition() {
+    if (dragRafRef.current != null) return;
+    dragRafRef.current = requestAnimationFrame(() => {
+      dragRafRef.current = null;
+      const dragState = dragStateRef.current;
+      if (!draggingRef.current || !dragState || dragState.originX == null || dragState.originY == null) return;
+      const nextX = dragState.originX + dragState.latestScreenX - dragState.startScreenX;
+      const nextY = dragState.originY + dragState.latestScreenY - dragState.startScreenY;
+      window.desktop.setFloatingPosition?.(
+        nextX, nextY, dragState.latestScreenX, dragState.latestScreenY, false,
+      );
+    });
+  }
+
+  function onMiniPointerMove(event: React.PointerEvent<HTMLButtonElement>) {
+    const dragState = dragStateRef.current;
+    if (!draggingRef.current || !dragState || event.pointerId !== dragState.pointerId) return;
+    dragState.latestScreenX = event.screenX;
+    dragState.latestScreenY = event.screenY;
+    scheduleMiniPosition();
+  }
+
+  function onMiniPointerUp(event: React.PointerEvent<HTMLButtonElement>) {
+    const dragState = dragStateRef.current;
+    if (!draggingRef.current || !dragState || event.pointerId !== dragState.pointerId) return;
+    dragState.latestScreenX = event.screenX;
+    dragState.latestScreenY = event.screenY;
+    if (dragRafRef.current != null) {
+      cancelAnimationFrame(dragRafRef.current);
+      dragRafRef.current = null;
+    }
+    if (dragState.originX != null && dragState.originY != null) {
+      const nextX = dragState.originX + dragState.latestScreenX - dragState.startScreenX;
+      const nextY = dragState.originY + dragState.latestScreenY - dragState.startScreenY;
+      window.desktop.setFloatingPosition?.(
+        nextX, nextY, dragState.latestScreenX, dragState.latestScreenY, true,
+      );
+    }
+    draggingRef.current = false;
+    dragStateRef.current = null;
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    }
+  }
+
+function onMiniDoubleClick() {
+  void setMode('expanded');
+}
+
   function toggleTag(id: string) {
     setSelectedTagIds((current) => {
       if (current.includes(id)) return current.filter((item) => item !== id);
@@ -224,16 +312,18 @@ export function FloatingWindow() {
 
   if (isMini) {
     return (
-      <div className="floating-shell floating-shell--mini" data-theme={theme}>
-        <div className="floating-mini window-drag">
+      <div className="floating-shell floating-shell--mini window-no-drag" data-theme={theme}>
+        <div className="floating-mini window-no-drag">
           <button
             aria-label="展开笔记浮窗"
-            className="window-no-drag"
-            onClick={() => void setMode('expanded')}
+            className="floating-mini-button window-no-drag"
+            onDoubleClick={onMiniDoubleClick}
+            onPointerDown={onMiniPointerDown}
+            onPointerMove={onMiniPointerMove}
+            onPointerUp={onMiniPointerUp}
             type="button"
           >
-            <span aria-hidden="true">记</span>
-            笔记
+            <span aria-hidden="true" className="floating-mini-icon">记</span>
           </button>
         </div>
       </div>
@@ -245,17 +335,18 @@ export function FloatingWindow() {
       <Card className="floating-card">
         <header className="floating-card__header window-drag">
           <div>
-            <span className="floating-card__caption">快速记录</span>
-            <h1>今日笔记</h1>
+            <span className="floating-card__caption">Quick Note</span>
           </div>
           <div className="floating-card__window-actions window-no-drag">
-            <button aria-label="折叠浮窗" onClick={() => void setMode('mini')} type="button">—</button>
+            <button aria-label="折叠浮窗" onClick={() => void setMode('mini')} type="button">
+              <span aria-hidden="true" className="window-minimize-icon" />
+            </button>
             <button
               aria-label="隐藏浮窗"
               onClick={() => void window.desktop?.hideFloatingWindow()}
               type="button"
             >
-              ×
+            <span aria-hidden="true" className="window-close-icon" />
             </button>
           </div>
         </header>

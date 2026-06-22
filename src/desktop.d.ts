@@ -82,6 +82,7 @@ type AttachmentContent = {
 };
 
 type DesktopApi = {
+  setTitleBarTheme: (theme: 'light' | 'dark') => Promise<boolean>;
   createNote: (input: CreateNoteInput) => Promise<Note>;
   updateNote: (id: string, input: UpdateNoteInput) => Promise<NoteMutationResult>;
   deleteNote: (id: string) => Promise<NoteMutationResult>;
@@ -113,6 +114,8 @@ type DesktopApi = {
   setFloatingMode: (mode: FloatingMode) => Promise<FloatingState>;
   showFloatingWindow: () => Promise<FloatingState>;
   toggleFloatingWindow: () => Promise<FloatingState>;
+  getFloatingBounds?: () => Promise<FloatingBounds | null>;
+  setFloatingPosition?: (x: number, y: number, cursorX: number, cursorY: number, finalize: boolean) => void;
 };
 
 interface Window {

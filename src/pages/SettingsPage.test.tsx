@@ -3,17 +3,34 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { SettingsPage } from './SettingsPage';
 
-beforeEach(()=>Object.defineProperty(window,'desktop',{configurable:true,value:{
-  getSettings:vi.fn().mockResolvedValue({schemaVersion:1,theme:'light',floatingShortcut:'Alt+J',defaultCategoryId:null,onboardingDismissed:false}),
-  getCategories:vi.fn().mockResolvedValue([]), getStorageInfo:vi.fn().mockResolvedValue({dataFilePath:'C:\\memo\\app-data\\notes.json'}),
-  updateSettings:vi.fn().mockImplementation(async (patch) => ({schemaVersion:1,theme:'light',floatingShortcut:'Alt+J',defaultCategoryId:null,onboardingDismissed:false,...patch})),
-  openDataDirectory:vi.fn(), exportMarkdown:vi.fn(), exportJson:vi.fn(), backupData:vi.fn(), restoreData:vi.fn(),
-}}));
+beforeEach(() => {
+  Object.defineProperty(window, 'desktop', { configurable: true, value: {
+    getSettings:vi.fn().mockResolvedValue({schemaVersion:1,theme:'light',floatingShortcut:'Alt+J',defaultCategoryId:null,onboardingDismissed:false}),
+    getCategories:vi.fn().mockResolvedValue([]), getStorageInfo:vi.fn().mockResolvedValue({dataFilePath:'C:\\memo\\app-data\\notes.json'}),
+    updateSettings:vi.fn().mockImplementation(async (patch) => ({schemaVersion:1,theme:'light',floatingShortcut:'Alt+J',defaultCategoryId:null,onboardingDismissed:false,...patch})),
+    openDataDirectory:vi.fn(), exportMarkdown:vi.fn(), exportJson:vi.fn(), backupData:vi.fn(), restoreData:vi.fn(),
+  }});
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText: vi.fn().mockResolvedValue(undefined) },
+  });
+});
 
 it('renders all Batch 8 settings sections and local-only disclaimer',async()=>{
   render(<SettingsPage/>);
-  for(const name of ['外观设置','浮窗设置','默认记录设置','数据位置','导出与备份','关于项目']) expect(await screen.findByText(name)).toBeInTheDocument();
+  for(const name of ['偏好设置','浮窗设置','数据管理','关于 Trading Memo']) expect(await screen.findByText(name)).toBeInTheDocument();
   expect(screen.getByText(/不提供投资建议/)).toBeInTheDocument();
+});
+
+it('copies the local data directory and reports success', async () => {
+  const user = userEvent.setup();
+  const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+  render(<SettingsPage />);
+
+  await user.click(await screen.findByRole('button', { name: '复制路径' }));
+
+  expect(writeText).toHaveBeenCalledWith('C:\\memo\\app-data');
+  expect(await screen.findByText('数据路径已复制。')).toBeInTheDocument();
 });
 
 it('persists a theme selection and reports success', async () => {
