@@ -79,10 +79,14 @@ async function run() {
   );
   await waitFor(mainWindow, "!document.querySelector('.library-filter-panel')");
   await mainWindow.webContents.executeJavaScript(
-    "document.querySelector('[aria-label=\"切换到深色主题\"]')?.click()",
+    "document.querySelector('[aria-label=\"收起侧边栏\"]')?.click()",
   );
-  await waitFor(mainWindow, "document.querySelector('[data-testid=\"app-shell\"]')?.dataset.theme === 'dark'");
-  await capture(mainWindow, 'qa-library-dark.png');
+  await waitFor(mainWindow, "document.querySelector('[data-testid=\"app-shell\"]')?.dataset.sidebarCollapsed === 'true'");
+  await capture(mainWindow, 'qa-library-sidebar-collapsed.png');
+  await mainWindow.webContents.executeJavaScript(
+    "document.querySelector('[aria-label=\"展开侧边栏\"]')?.click()",
+  );
+  await waitFor(mainWindow, "document.querySelector('[data-testid=\"app-shell\"]')?.dataset.sidebarCollapsed === 'false'");
 
   floatingWindow = new BrowserWindow({
     width: 380,

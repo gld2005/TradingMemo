@@ -6,9 +6,8 @@ type SidebarProps = {
   activePage: PageId;
   floatingVisible: boolean;
   onNavigate: (page: PageId) => void;
+  onCollapse: () => void;
   onToggleFloating: () => void;
-  theme: 'light' | 'dark';
-  onToggleTheme: () => void;
   shortcutRegistered: boolean;
 };
 
@@ -23,9 +22,8 @@ export function Sidebar({
   activePage,
   floatingVisible,
   onNavigate,
+  onCollapse,
   onToggleFloating,
-  theme,
-  onToggleTheme,
   shortcutRegistered,
 }: SidebarProps) {
   return (
@@ -36,6 +34,15 @@ export function Sidebar({
           <strong>学习笔记</strong>
           <span>A 股学习记录</span>
         </div>
+        <button
+          aria-label="收起侧边栏"
+          className="sidebar__collapse"
+          onClick={onCollapse}
+          title="收起侧边栏"
+          type="button"
+        >
+          ‹
+        </button>
       </div>
 
       <nav className="sidebar__nav" aria-label="主要导航">
@@ -57,16 +64,7 @@ export function Sidebar({
         <Button onClick={onToggleFloating} variant="primary">
           {floatingVisible ? '隐藏浮窗' : '显示浮窗'}
         </Button>
-        <p>{shortcutRegistered ? '快捷键 Alt + J' : '快捷键不可用，可使用上方按钮'}</p>
-        <Button
-          aria-label={theme === 'light' ? '切换到深色主题' : '切换到浅色主题'}
-          onClick={onToggleTheme}
-          variant="secondary"
-        >
-          <span aria-hidden="true">{theme === 'light' ? '◐' : '◑'}</span>
-          {theme === 'light' ? '深色主题' : '浅色主题'}
-        </Button>
-        <p>主题设置保存在本地</p>
+        {shortcutRegistered ? <p>快捷键 Alt + J</p> : null}
       </div>
     </aside>
   );

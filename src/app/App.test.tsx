@@ -57,16 +57,25 @@ describe('main window shell', () => {
     expect(screen.getByText('数据管理')).toBeInTheDocument();
   });
 
-  it('switches theme only in the current renderer state', async () => {
+  it('does not expose theme switching in the sidebar', () => {
+    render(<App />);
+
+    expect(screen.queryByRole('button', { name: '切换到深色主题' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '切换到浅色主题' })).not.toBeInTheDocument();
+    expect(screen.queryByText('主题设置保存在本地')).not.toBeInTheDocument();
+  });
+
+  it('collapses and expands the sidebar', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    const shell = screen.getByTestId('app-shell');
-    expect(shell).toHaveAttribute('data-theme', 'light');
+    await user.click(screen.getByRole('button', { name: '收起侧边栏' }));
+    expect(screen.getByTestId('app-shell')).toHaveAttribute('data-sidebar-collapsed', 'true');
+    expect(screen.queryByRole('button', { name: '今日记录' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '切换到深色主题' }));
-    expect(shell).toHaveAttribute('data-theme', 'dark');
-    await waitFor(() => expect(window.desktop.setTitleBarTheme).toHaveBeenLastCalledWith('dark'));
+    await user.click(screen.getByRole('button', { name: '展开侧边栏' }));
+    expect(screen.getByTestId('app-shell')).toHaveAttribute('data-sidebar-collapsed', 'false');
+    expect(screen.getByRole('button', { name: '今日记录' })).toBeInTheDocument();
   });
 
   it('tracks system theme changes while the system preference is selected', async () => {

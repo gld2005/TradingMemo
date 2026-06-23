@@ -73,7 +73,6 @@ export function App() {
       floatingVisible={floatingVisible}
       onNavigate={setActivePage}
       onToggleFloating={() => void toggleFloatingWindow()}
-      onToggleTheme={() => {const next=theme==='light'?'dark':'light';setTheme(next);void window.desktop?.updateSettings?.({theme:next});}}
       shortcutRegistered={shortcutRegistered}
       theme={theme}
     >

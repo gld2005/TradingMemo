@@ -135,6 +135,10 @@ select:focus-visible {
   background: var(--color-bg);
 }
 
+.app-shell[data-sidebar-collapsed='true'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .app-title-bar {
   position: absolute;
   inset: 0 0 auto;
@@ -166,6 +170,42 @@ select:focus-visible {
   align-items: center;
   gap: var(--space-3);
   padding: 0 var(--space-2) var(--space-8);
+}
+
+.sidebar__brand > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebar__collapse,
+.sidebar-expand {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.sidebar__collapse:hover,
+.sidebar-expand:hover {
+  color: var(--color-text);
+  background: var(--color-surface-muted);
+}
+
+.sidebar-expand {
+  position: absolute;
+  z-index: 2;
+  top: 52px;
+  left: 18px;
+  font-size: 17px;
 }
 
 .sidebar__brand-mark {
@@ -1533,6 +1573,10 @@ transform: rotate(-45deg);
     grid-template-columns: 190px minmax(0, 1fr);
   }
 
+  .app-shell[data-sidebar-collapsed='true'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .sidebar {
     padding-inline: var(--space-3);
   }
@@ -1553,6 +1597,10 @@ transform: rotate(-45deg);
 @media (max-width: 1100px) and (min-width: 761px) {
   .app-shell {
     grid-template-columns: 190px minmax(0, 1fr);
+  }
+
+  .app-shell[data-sidebar-collapsed='true'] {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .sidebar__brand div {

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Sidebar, type PageId } from '../components/Sidebar';
 
 type AppLayoutProps = {
@@ -7,7 +7,6 @@ type AppLayoutProps = {
   floatingVisible: boolean;
   onNavigate: (page: PageId) => void;
   onToggleFloating: () => void;
-  onToggleTheme: () => void;
   shortcutRegistered: boolean;
   theme: 'light' | 'dark';
 };
@@ -18,22 +17,39 @@ export function AppLayout({
   floatingVisible,
   onNavigate,
   onToggleFloating,
-  onToggleTheme,
   shortcutRegistered,
   theme,
 }: AppLayoutProps) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   return (
-    <div className="app-shell" data-theme={theme} data-testid="app-shell">
+    <div
+      className="app-shell"
+      data-sidebar-collapsed={sidebarCollapsed}
+      data-theme={theme}
+      data-testid="app-shell"
+    >
       <div className="app-title-bar" data-testid="app-title-bar" aria-hidden="true" />
-      <Sidebar
-        activePage={activePage}
-        floatingVisible={floatingVisible}
-        onNavigate={onNavigate}
-        onToggleFloating={onToggleFloating}
-        onToggleTheme={onToggleTheme}
-        shortcutRegistered={shortcutRegistered}
-        theme={theme}
-      />
+      {sidebarCollapsed ? (
+        <button
+          aria-label="展开侧边栏"
+          className="sidebar-expand"
+          onClick={() => setSidebarCollapsed(false)}
+          title="展开侧边栏"
+          type="button"
+        >
+          ☰
+        </button>
+      ) : (
+        <Sidebar
+          activePage={activePage}
+          floatingVisible={floatingVisible}
+          onCollapse={() => setSidebarCollapsed(true)}
+          onNavigate={onNavigate}
+          onToggleFloating={onToggleFloating}
+          shortcutRegistered={shortcutRegistered}
+        />
+      )}
       <main className="main-content">{children}</main>
     </div>
   );
