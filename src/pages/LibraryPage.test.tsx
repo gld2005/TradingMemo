@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LibraryPage } from './LibraryPage';
@@ -116,6 +116,62 @@ describe('knowledge library', () => {
     expect(await screen.findByText('当前分类还没有笔记。')).toBeInTheDocument();
     expect(screen.getByText('选择一条笔记查看详情。')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: '放量突破观察' })).not.toBeInTheDocument();
+  });
+
+  it('moves an uncategorized note by dropping it onto a category label', async () => {
+    const movedNote = { ...notes[1], categoryId: category.id, updatedAt: '2026-06-21T10:00:00.000Z' };
+    vi.mocked(window.desktop.getAllNotes)
+      .mockResolvedValueOnce(notes)
+      .mockResolvedValueOnce([notes[0], movedNote]);
+    render(<LibraryPage />);
+    await screen.findByRole('heading', { name: '放量突破观察' });
+
+    const noteList = screen.getByRole('list', { name: '笔记列表' });
+    const draggedCard = within(noteList).getAllByText(notes[1].content)[0].closest('button');
+    expect(draggedCard).not.toBeNull();
+    fireEvent.dragStart(draggedCard!, {
+      dataTransfer: { effectAllowed: '', setData: vi.fn(), getData: vi.fn() },
+    });
+    fireEvent.dragOver(screen.getByRole('button', { name: 'K线知识 1' }), {
+      dataTransfer: { dropEffect: '' },
+    });
+    fireEvent.drop(screen.getByRole('button', { name: 'K线知识 1' }), {
+      dataTransfer: { getData: vi.fn().mockReturnValue(notes[1].id) },
+    });
+
+    await waitFor(() => expect(window.desktop.updateNote).toHaveBeenCalledOnce());
+    expect(window.desktop.updateNote).toHaveBeenCalledWith(notes[1].id, expect.objectContaining({
+      title: '', content: notes[1].content, categoryId: category.id, tagIds: [],
+      stockName: '', stockCode: '', removeAttachmentIds: [], images: [],
+    }));
+    expect(await screen.findByRole('button', { name: 'K线知识 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '未分类 0' })).toBeInTheDocument();
+  });
+
+  it('moves an already categorized note back to uncategorized by dropping it onto the uncategorized label', async () => {
+    const movedNote = { ...notes[0], categoryId: null, updatedAt: '2026-06-21T10:00:00.000Z' };
+    vi.mocked(window.desktop.getAllNotes)
+      .mockResolvedValueOnce(notes)
+      .mockResolvedValueOnce([movedNote, notes[1]]);
+    render(<LibraryPage />);
+    await screen.findByRole('heading', { name: '放量突破观察' });
+
+    const noteList = screen.getByRole('list', { name: '笔记列表' });
+    const draggedCard = within(noteList).getByText(notes[0].title!).closest('button');
+    expect(draggedCard).not.toBeNull();
+    fireEvent.dragStart(draggedCard!, {
+      dataTransfer: { effectAllowed: '', setData: vi.fn(), getData: vi.fn() },
+    });
+    fireEvent.drop(screen.getByRole('button', { name: '未分类 1' }), {
+      dataTransfer: { getData: vi.fn().mockReturnValue(notes[0].id) },
+    });
+
+    await waitFor(() => expect(window.desktop.updateNote).toHaveBeenCalledOnce());
+    expect(window.desktop.updateNote).toHaveBeenCalledWith(notes[0].id, expect.objectContaining({
+      categoryId: null,
+    }));
+    expect(await screen.findByRole('button', { name: 'K线知识 0' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '未分类 2' })).toBeInTheDocument();
   });
 
   it('searches local note content and keeps the detail synchronized with results', async () => {

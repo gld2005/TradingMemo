@@ -751,9 +751,14 @@ select:focus-visible {
 }
 
 .library-categories button:hover,
-.library-categories button[aria-pressed='true'] {
+.library-categories button[aria-pressed='true'],
+.library-categories button[data-drop-target='true'] {
   color: var(--color-accent-strong);
   background: var(--color-accent-soft);
+}
+
+.library-categories button[data-drop-target='true'] {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
 }
 
 .library-categories button strong {
@@ -966,7 +971,11 @@ select:focus-visible {
   background: var(--color-surface);
   box-shadow: 0 8px 24px rgba(31, 43, 78, 0.04);
   text-align: left;
-  cursor: pointer;
+  cursor: grab;
+}
+
+.library-note-card:active {
+  cursor: grabbing;
 }
 
 .library-note-card:hover {

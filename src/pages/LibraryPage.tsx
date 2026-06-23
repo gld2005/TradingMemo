@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
@@ -106,6 +106,8 @@ export function LibraryPage() {
   const [preview, setPreview] = useState<ImagePreview | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
+  const [dropTargetCategory, setDropTargetCategory] = useState<string | null>(null);
 
   const loadLibrary = useCallback(async (preferredId?: string | null) => {
     if (!window.desktop) return;
@@ -220,6 +222,55 @@ export function LibraryPage() {
     setSelectedId(nextNotes[0]?.id ?? null);
   }
 
+  function startNoteDrag(event: DragEvent<HTMLButtonElement>, noteId: string) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', noteId);
+    setDraggedNoteId(noteId);
+  }
+
+  function endNoteDrag() {
+    setDraggedNoteId(null);
+    setDropTargetCategory(null);
+  }
+
+  function allowCategoryDrop(event: DragEvent<HTMLButtonElement>, categoryId: string | null) {
+    if (!draggedNoteId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDropTargetCategory(categoryId ?? 'uncategorized');
+  }
+
+  async function moveNoteToCategory(noteId: string, categoryId: string | null) {
+    const note = notes.find(({ id }) => id === noteId);
+    if (!note || note.categoryId === categoryId) return;
+    setFeedback('');
+    try {
+      await window.desktop.updateNote(note.id, {
+        title: note.title ?? '',
+        content: note.content,
+        categoryId,
+        tagIds: note.tagIds,
+        stockName: note.stockName ?? '',
+        stockCode: note.stockCode ?? '',
+        removeAttachmentIds: [],
+        images: [],
+      });
+      if (editor && selectedNote?.id === note.id) cancelEdit();
+      setFeedback(categoryId ? '笔记分类已移动。' : '笔记已移到未分类。');
+      await loadLibrary(note.id);
+    } catch {
+      setFeedback('移动分类失败，请检查本地数据文件后重试。');
+    }
+  }
+
+  function dropNoteOnCategory(event: DragEvent<HTMLButtonElement>, categoryId: string | null) {
+    event.preventDefault();
+    const noteId = event.dataTransfer.getData('text/plain') || draggedNoteId;
+    endNoteDrag();
+    if (!noteId) return;
+    void moveNoteToCategory(noteId, categoryId);
+  }
+
   function cancelEdit() {
     editor?.newImages.forEach(({ url }) => URL.revokeObjectURL(url));
     setEditor(null);
@@ -282,12 +333,31 @@ export function LibraryPage() {
             <button aria-label={`全部笔记 ${notes.length}`} aria-pressed={filters.category === 'all'} onClick={() => chooseScope('all')} type="button">
               <span>全部笔记</span><strong>{notes.length}</strong>
             </button>
-            <button aria-label={`未分类 ${notes.filter(({ categoryId }) => !categoryId).length}`} aria-pressed={filters.category === 'uncategorized'} onClick={() => chooseScope('uncategorized')} type="button">
+            <button
+              aria-label={`未分类 ${notes.filter(({ categoryId }) => !categoryId).length}`}
+              aria-pressed={filters.category === 'uncategorized'}
+              data-drop-target={dropTargetCategory === 'uncategorized'}
+              onClick={() => chooseScope('uncategorized')}
+              onDragLeave={() => setDropTargetCategory(null)}
+              onDragOver={(event) => allowCategoryDrop(event, null)}
+              onDrop={(event) => dropNoteOnCategory(event, null)}
+              type="button"
+            >
               <span>未分类</span><strong>{notes.filter(({ categoryId }) => !categoryId).length}</strong>
             </button>
             <div className="library-categories__divider" />
             {categories.map((item) => (
-              <button aria-label={`${item.name} ${categoryCounts.get(item.id) ?? 0}`} aria-pressed={filters.category === item.id} key={item.id} onClick={() => chooseScope(item.id)} type="button">
+              <button
+                aria-label={`${item.name} ${categoryCounts.get(item.id) ?? 0}`}
+                aria-pressed={filters.category === item.id}
+                data-drop-target={dropTargetCategory === item.id}
+                key={item.id}
+                onClick={() => chooseScope(item.id)}
+                onDragLeave={() => setDropTargetCategory(null)}
+                onDragOver={(event) => allowCategoryDrop(event, item.id)}
+                onDrop={(event) => dropNoteOnCategory(event, item.id)}
+                type="button"
+              >
                 <span>{item.name}</span><strong>{categoryCounts.get(item.id) ?? 0}</strong>
               </button>
             ))}
@@ -344,8 +414,11 @@ export function LibraryPage() {
                     <button
                       aria-pressed={selectedId === note.id}
                       className="library-note-card"
+                      draggable
                       key={note.id}
                       onClick={() => { cancelEdit(); setSelectedId(note.id); }}
+                      onDragEnd={endNoteDrag}
+                      onDragStart={(event) => startNoteDrag(event, note.id)}
                       role="listitem"
                       type="button"
                     >
