@@ -204,7 +204,7 @@ select:focus-visible {
   position: absolute;
   z-index: 2;
   top: 52px;
-  left: 18px;
+  left: 26px;
   font-size: 17px;
 }
 
@@ -305,6 +305,10 @@ select:focus-visible {
 .main-content {
   min-width: 0;
   padding: clamp(32px, 5vw, 64px);
+}
+
+.app-shell[data-sidebar-collapsed='true'] .main-content {
+  padding-left: max(clamp(32px, 5vw, 64px), 96px);
 }
 
 .main-content:has(.today-page) {
@@ -1745,6 +1749,10 @@ transform: rotate(-45deg);
 
   .main-content {
     padding: var(--space-6);
+  }
+
+  .app-shell[data-sidebar-collapsed='true'] .main-content {
+    padding-left: 88px;
   }
 
   .organizer-grid {

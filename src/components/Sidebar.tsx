@@ -23,7 +23,7 @@ export function Sidebar({
       <div className="sidebar__brand">
         <span className="sidebar__brand-mark" aria-hidden="true">记</span>
         <div>
-          <strong>学习笔记</strong>
+          <strong>Quick Note</strong>
           <span>A 股学习记录</span>
         </div>
         <button

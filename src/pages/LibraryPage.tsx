@@ -321,7 +321,7 @@ export function LibraryPage() {
 
   return (
     <div className="page library-page">
-      <PageHeader title="知识库" description="集中查看并整理积累下来的学习内容。" />
+      <PageHeader title="知识库" />
       {feedback ? <div className="library-feedback" role="status">{feedback}</div> : null}
       {error ? <Card className="notes-status notes-status--error">{error}</Card> : null}
       {!error && loading ? <Card className="notes-status">正在读取本地知识库…</Card> : null}

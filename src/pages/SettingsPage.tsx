@@ -94,7 +94,7 @@ export function SettingsPage() {
 
   return (
     <div className="page settings-page">
-      <PageHeader title="设置" description="管理外观、浮窗与本地数据。" />
+      <PageHeader title="设置" />
       <div className="settings-grid">
         <Card className="settings-card">
           <div className="settings-card__header">

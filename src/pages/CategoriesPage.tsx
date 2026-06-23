@@ -100,7 +100,7 @@ export function CategoriesPage() {
 
   return (
     <div className="page">
-      <PageHeader title="分类" description="为学习内容建立清晰、稳定的组织方式。" />
+      <PageHeader title="分类" />
       {feedback ? <Card className="organizer-feedback" aria-live="polite">{feedback}</Card> : null}
       <div className="organizer-grid">
         <Card className="organizer-panel">
