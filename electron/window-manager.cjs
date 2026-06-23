@@ -1,5 +1,5 @@
 const FLOATING_SIZES = {
-  expanded: [380, 430],
+  expanded: [380, 390],
   mini: [80, 80],
 };
 
@@ -39,6 +39,13 @@ function createWindowManager({
     });
 
     mainWindow.removeMenu();
+    mainWindow.on('minimize', () => {
+      if (showFloatingWindow()) onFloatingVisibilityChanged(true);
+    });
+    mainWindow.on('restore', () => {
+      hideFloatingWindow();
+      onFloatingVisibilityChanged(false);
+    });
 
     floatingWindow = new BrowserWindow({
       width: FLOATING_SIZES.expanded[0],

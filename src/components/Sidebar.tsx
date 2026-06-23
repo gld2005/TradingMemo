@@ -1,14 +1,9 @@
-import { Button } from './Button';
-
 export type PageId = 'today' | 'library' | 'categories' | 'settings';
 
 type SidebarProps = {
   activePage: PageId;
-  floatingVisible: boolean;
   onNavigate: (page: PageId) => void;
   onCollapse: () => void;
-  onToggleFloating: () => void;
-  shortcutRegistered: boolean;
 };
 
 const navigation: Array<{ id: PageId; label: string }> = [
@@ -20,11 +15,8 @@ const navigation: Array<{ id: PageId; label: string }> = [
 
 export function Sidebar({
   activePage,
-  floatingVisible,
   onNavigate,
   onCollapse,
-  onToggleFloating,
-  shortcutRegistered,
 }: SidebarProps) {
   return (
     <aside className="sidebar">
@@ -60,12 +52,7 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="sidebar__footer">
-        <Button onClick={onToggleFloating} variant="primary">
-          {floatingVisible ? '隐藏浮窗' : '显示浮窗'}
-        </Button>
-        {shortcutRegistered ? <p>快捷键 Alt + J</p> : null}
-      </div>
+      <div className="sidebar__footer" aria-hidden="true" />
     </aside>
   );
 }

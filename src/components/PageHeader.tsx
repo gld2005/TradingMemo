@@ -1,6 +1,6 @@
 type PageHeaderProps = {
   title: string;
-  description: string;
+  description?: string;
 };
 
 export function PageHeader({ title, description }: PageHeaderProps) {
@@ -9,7 +9,7 @@ export function PageHeader({ title, description }: PageHeaderProps) {
       <div>
         <p className="page-header__eyebrow">学习笔记</p>
         <h1>{title}</h1>
-        <p className="page-header__description">{description}</p>
+        {description ? <p className="page-header__description">{description}</p> : null}
       </div>
     </header>
   );

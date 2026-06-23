@@ -127,7 +127,7 @@ test('configures and controls one always-on-top floating window', () => {
   assert.equal(floatingWindow.options.alwaysOnTop, true);
   assert.equal(floatingWindow.options.frame, false);
   assert.equal(floatingWindow.options.resizable, false);
-  assert.deepEqual(floatingWindow.size, [380, 430]);
+  assert.deepEqual(floatingWindow.size, [380, 390]);
 
   manager.toggleFloatingWindow();
   assert.equal(floatingWindow.visible, true);
@@ -140,7 +140,7 @@ test('configures and controls one always-on-top floating window', () => {
   assert.equal(floatingWindow.hasWindowShadow, false);
   assert.equal(manager.getFloatingState().mode, 'mini');
   assert.equal(manager.setFloatingMode('expanded'), true);
-  assert.deepEqual(floatingWindow.size, [380, 430]);
+  assert.deepEqual(floatingWindow.size, [380, 390]);
   assert.equal(floatingWindow.hasWindowShadow, true);
   assert.equal(manager.getFloatingState().mode, 'expanded');
   assert.equal(manager.setFloatingMode('unknown'), false);
@@ -166,4 +166,24 @@ test('hides the floating window instead of destroying it on close', () => {
   assert.equal(floatingWindow.visible, false);
   assert.equal(manager.getFloatingWindow(), floatingWindow);
   assert.deepEqual(visibilityChanges, [false]);
+});
+
+test('shows the floating window when the main window is minimized and hides it when restored', () => {
+  const visibilityChanges = [];
+  const manager = createWindowManager({
+    BrowserWindow: FakeBrowserWindow,
+    loadRenderer: () => undefined,
+    onFloatingVisibilityChanged: (visible) => visibilityChanges.push(visible),
+  });
+  const { mainWindow, floatingWindow } = manager.createWindows();
+
+  mainWindow.emit('minimize');
+
+  assert.equal(floatingWindow.visible, true);
+  assert.equal(floatingWindow.focused, true);
+
+  mainWindow.emit('restore');
+
+  assert.equal(floatingWindow.visible, false);
+  assert.deepEqual(visibilityChanges, [true, false]);
 });

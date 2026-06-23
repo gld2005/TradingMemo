@@ -59,11 +59,49 @@ async function run() {
         createdAt: '2026-06-21T08:00:00.000Z', updatedAt: '2026-06-21T08:00:00.000Z'
       }],
       getAttachments: async () => [],
+      getSettings: async () => ({
+        schemaVersion: 1,
+        theme: 'light',
+        floatingShortcut: 'Alt+J',
+        defaultCategoryId: null,
+        onboardingDismissed: true
+      }),
+      createNote: async () => ({
+        id: 'qa-created-note',
+        title: null,
+        content: '视觉烟测记录',
+        categoryId: null,
+        tagIds: [],
+        stockName: null,
+        stockCode: null,
+        attachmentIds: [],
+        createdAt: '2026-06-23T08:00:00.000Z',
+        updatedAt: '2026-06-23T08:00:00.000Z'
+      }),
+      createTag: async (input) => ({
+        id: 'qa-new-tag',
+        name: input.name,
+        usageCount: 0,
+        createdAt: '2026-06-23T08:00:00.000Z',
+        updatedAt: '2026-06-23T08:00:00.000Z'
+      }),
       onNotesChanged: () => () => {},
+      onFloatingShown: () => () => {},
       readAttachment: async () => { throw new Error('No QA attachment'); },
       updateNote: async () => { throw new Error('Not used in visual smoke'); },
       deleteNote: async () => { throw new Error('Not used in visual smoke'); }
     };
+    [...document.querySelectorAll('.sidebar__nav-item')]
+      .find((item) => item.textContent.includes('知识库'))?.click();
+  `);
+  await waitFor(mainWindow, "document.querySelector('.library-layout')");
+  await mainWindow.webContents.executeJavaScript(`
+    [...document.querySelectorAll('.sidebar__nav-item')]
+      .find((item) => item.textContent.includes('今日记录'))?.click();
+  `);
+  await waitFor(mainWindow, "document.querySelector('.today-layout')");
+  await capture(mainWindow, 'qa-today-layout.png');
+  await mainWindow.webContents.executeJavaScript(`
     [...document.querySelectorAll('.sidebar__nav-item')]
       .find((item) => item.textContent.includes('知识库'))?.click();
   `);
@@ -90,7 +128,7 @@ async function run() {
 
   floatingWindow = new BrowserWindow({
     width: 380,
-    height: 640,
+    height: 390,
     backgroundColor: '#00000000',
     frame: false,
     show: true,

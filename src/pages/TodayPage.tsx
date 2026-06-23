@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
+import { NoteComposer } from '../components/NoteComposer';
 import { PageHeader } from '../components/PageHeader';
 
 type ImagePreview = { url: string; label: string };
@@ -109,53 +110,62 @@ export function TodayPage() {
   const tagNames = useMemo(() => new Map(tags.map(({ id, name }) => [id, name])), [tags]);
 
   return (
-    <div className="page">
-      <PageHeader title="今日记录" description="专注记录当天的学习心得与看盘经验。" />
-      {error ? <Card className="notes-status notes-status--error">{error}</Card> : null}
-      {!error && loading ? <Card className="notes-status">正在读取本地笔记…</Card> : null}
-      {!error && !loading && notes.length === 0 ? (
-        <EmptyState message="今天还没有记录，后续可以通过浮窗快速保存学习笔记。" />
-      ) : null}
-      {!error && !loading && notes.length > 0 ? (
-        <div className="notes-list" aria-label="已保存笔记">
-          {notes.map((note) => (
-            <Card className="note-row" key={note.id}>
-              <time dateTime={note.createdAt}>
-                {new Date(note.createdAt).toLocaleTimeString('zh-CN', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                })}
-              </time>
-              <div className="note-row__content">
-                <p>{note.content.length > 80 ? `${note.content.slice(0, 80)}…` : note.content}</p>
-                {(note.stockName || note.stockCode) ? (
-                  <div className="note-row__stock">{[note.stockName, note.stockCode].filter(Boolean).join(' · ')}</div>
-                ) : null}
-                {note.tagIds?.length > 0 ? (
-                  <div aria-label="笔记标签" className="note-row__tags">
-                    {note.tagIds.map((id) => tagNames.get(id)).filter(Boolean).map((name) => <span key={name}>{name}</span>)}
-                  </div>
-                ) : null}
-                {note.attachmentIds.length > 0 ? (
-                  <div aria-label="笔记图片" className="note-images">
-                    {note.attachmentIds.slice(0, 3).map((id) => {
-                      const attachment = attachmentsById.get(id);
-                      return attachment ? (
-                        <AttachmentThumbnail attachment={attachment} key={id} onOpen={setPreview} />
-                      ) : <span className="note-image--missing" key={id}>图片不可用</span>;
+    <div className="page today-page">
+      <PageHeader title="今日记录" />
+      <div className="today-layout">
+        <section aria-label="今日已保存记录" className="today-records" role="region">
+          {error ? <Card className="notes-status notes-status--error">{error}</Card> : null}
+          {!error && loading ? <Card className="notes-status">正在读取本地笔记…</Card> : null}
+          {!error && !loading && notes.length === 0 ? (
+            <EmptyState message="今天还没有记录" />
+          ) : null}
+          {!error && !loading && notes.length > 0 ? (
+            <div className="notes-list" aria-label="已保存笔记">
+              {notes.map((note) => (
+                <Card className="note-row" key={note.id}>
+                  <time dateTime={note.createdAt}>
+                    {new Date(note.createdAt).toLocaleTimeString('zh-CN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
                     })}
-                    {note.attachmentIds.length > 3 ? (
-                      <span className="note-images__more">+{note.attachmentIds.length - 3}</span>
+                  </time>
+                  <div className="note-row__content">
+                    <p>{note.content.length > 80 ? `${note.content.slice(0, 80)}…` : note.content}</p>
+                    {(note.stockName || note.stockCode) ? (
+                      <div className="note-row__stock">{[note.stockName, note.stockCode].filter(Boolean).join(' · ')}</div>
+                    ) : null}
+                    {note.tagIds?.length > 0 ? (
+                      <div aria-label="笔记标签" className="note-row__tags">
+                        {note.tagIds.map((id) => tagNames.get(id)).filter(Boolean).map((name) => <span key={name}>{name}</span>)}
+                      </div>
+                    ) : null}
+                    {note.attachmentIds.length > 0 ? (
+                      <div aria-label="笔记图片" className="note-images">
+                        {note.attachmentIds.slice(0, 3).map((id) => {
+                          const attachment = attachmentsById.get(id);
+                          return attachment ? (
+                            <AttachmentThumbnail attachment={attachment} key={id} onOpen={setPreview} />
+                          ) : <span className="note-image--missing" key={id}>图片不可用</span>;
+                        })}
+                        {note.attachmentIds.length > 3 ? (
+                          <span className="note-images__more">+{note.attachmentIds.length - 3}</span>
+                        ) : null}
+                      </div>
                     ) : null}
                   </div>
-                ) : null}
-              </div>
-              <span>{note.categoryId ? categoryNames.get(note.categoryId) ?? '未分类' : '未分类'}</span>
-            </Card>
-          ))}
-        </div>
-      ) : null}
+                  <span>{note.categoryId ? categoryNames.get(note.categoryId) ?? '未分类' : '未分类'}</span>
+                </Card>
+              ))}
+            </div>
+          ) : null}
+        </section>
+        <section aria-label="记录输入区" className="today-composer" role="region">
+          <Card className="today-composer__card">
+            <NoteComposer onSaved={loadNotes} variant="full" />
+          </Card>
+        </section>
+      </div>
       {preview ? (
         <div aria-label="图片预览" aria-modal="true" className="image-preview" role="dialog">
           <div className="image-preview__panel">

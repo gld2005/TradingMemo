@@ -4,20 +4,14 @@ import { Sidebar, type PageId } from '../components/Sidebar';
 type AppLayoutProps = {
   activePage: PageId;
   children: ReactNode;
-  floatingVisible: boolean;
   onNavigate: (page: PageId) => void;
-  onToggleFloating: () => void;
-  shortcutRegistered: boolean;
   theme: 'light' | 'dark';
 };
 
 export function AppLayout({
   activePage,
   children,
-  floatingVisible,
   onNavigate,
-  onToggleFloating,
-  shortcutRegistered,
   theme,
 }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -43,11 +37,8 @@ export function AppLayout({
       ) : (
         <Sidebar
           activePage={activePage}
-          floatingVisible={floatingVisible}
           onCollapse={() => setSidebarCollapsed(true)}
           onNavigate={onNavigate}
-          onToggleFloating={onToggleFloating}
-          shortcutRegistered={shortcutRegistered}
         />
       )}
       <main className="main-content">{children}</main>

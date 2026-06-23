@@ -44,7 +44,7 @@ describe('main window shell', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(await screen.findByText('今天还没有记录，后续可以通过浮窗快速保存学习笔记。')).toBeInTheDocument();
+    expect(await screen.findByText('今天还没有记录')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '知识库' }));
     expect(await screen.findByText('知识库里还没有笔记。')).toBeInTheDocument();
@@ -105,13 +105,11 @@ describe('main window shell', () => {
     vi.unstubAllGlobals();
   });
 
-  it('provides a main-window entry that toggles the floating window', async () => {
-    const user = userEvent.setup();
+  it('does not expose a sidebar floating-window toggle because minimizing shows it automatically', async () => {
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: '隐藏浮窗' }));
-
-    expect(window.desktop.toggleFloatingWindow).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: '隐藏浮窗' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '显示浮窗' })).not.toBeInTheDocument();
   });
 });
 
